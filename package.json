@@ -1,7 +1,7 @@
 {
   "name": "darvis",
   "version": "1.0.0",
-  "description": "A Discord bot that acts as an AI agent using OpenAI.",
+  "description": "The agentic Discord bot.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -13,7 +13,6 @@
     "discord",
     "bot",
     "ai",
-    "openai",
     "agent"
   ],
   "author": "",
