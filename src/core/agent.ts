@@ -1,8 +1,4 @@
 import OpenAI from 'openai';
-import {
-  type ChatCompletionMessageParam,
-  type ChatCompletionTool,
-} from 'openai/resources/index.mjs';
 import { Client, Message } from 'discord.js';
 import { executeCode, executeDiscordJsCodeTool } from '../tools/executor.js';
 
@@ -30,11 +26,14 @@ const MAX_ITERATIONS = 5;
  * @returns Promise that resolves when the agent completes its task
  */
 export async function runAgent(client: Client, message: Message) {
-  const tools: ChatCompletionTool[] = [executeDiscordJsCodeTool];
-  const conversation: ChatCompletionMessageParam[] = [
+  const tools = [executeDiscordJsCodeTool];
+  let input: any[] = [
     {
       role: 'system',
-      content: `You are a helpful Discord bot. Your goal is to fulfill the user's request by executing Discord.js v14 code.
+      content: [
+        {
+          type: 'input_text',
+          text: `You are a helpful Discord bot. Your goal is to fulfill the user's request by executing Discord.js v14 code.
 You can use the provided 'execute_discord_js_code' tool to run code.
 The user's message is: "${message.cleanContent}".
 The message was sent in a channel with ID: ${message.channel.id} in a server with ID: ${message.guildId}.
@@ -43,44 +42,54 @@ If a request is complex, break it down into smaller pieces of code.
 For example, to ban a user, first find the user with 'message.guild.members.search', then use the returned ID to ban them.
 After a successful operation, your final step should be to use 'message.reply()' to inform the user of the outcome.
 If you don't know what to do or the user is just having a conversation, just respond with a friendly message using 'message.reply()'.`,
+        },
+      ],
     },
     {
       role: 'user',
-      content: message.cleanContent,
+      content: [
+        {
+          type: 'input_text',
+          text: message.cleanContent,
+        },
+      ],
     },
   ];
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: conversation,
-      tools: tools,
-      tool_choice: 'auto',
+    const response = await openai.responses.create({
+      model: 'gpt-4.1',
+      input,
+      tools,
     });
 
-    const responseMessage = response.choices[0].message;
-    const toolCalls = responseMessage.tool_calls;
+    const output = response.output;
+    let hasFunctionCalls = false;
 
-    if (toolCalls) {
-      conversation.push(responseMessage);
-      for (const toolCall of toolCalls) {
-        if (toolCall.function.name === 'execute_discord_js_code') {
-          const args = JSON.parse(toolCall.function.arguments);
+    for (const item of output) {
+      if (item.type === 'function_call') {
+        hasFunctionCalls = true;
+        
+        if (item.name === 'execute_discord_js_code') {
+          const args = JSON.parse(item.arguments);
           const result = await executeCode(client, message, args.code);
 
           console.log(`[Iteration ${i + 1}] Executing code:\n${args.code}`);
           console.log(`[Iteration ${i + 1}] Result:`, result);
           
-          conversation.push({
-            tool_call_id: toolCall.id,
-            role: 'tool',
-            content: JSON.stringify(result),
+          input.push(item);
+          input.push({
+            type: 'function_call_output',
+            call_id: item.call_id,
+            output: JSON.stringify(result),
           });
         }
       }
-    } else {
-      if (responseMessage.content) {
-        await message.reply(responseMessage.content);
+    }
+
+    if (!hasFunctionCalls) {
+      if (response.output_text) {
+        await message.reply(response.output_text);
       } else {
         await message.reply("I've finished my task but have nothing more to say!");
       }
