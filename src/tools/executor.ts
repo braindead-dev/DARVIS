@@ -15,7 +15,7 @@ The code runs in an async context, so you can use await.
 Return a value to let the user know the result of the execution.
 If you need to find a user/channel/role, you MUST use methods like 'message.guild.members.search' or 'client.users.fetch'. Do NOT guess IDs.
 For a successful execution, return an object with a 'summary' property, e.g., { summary: "Successfully banned the user." }.
-For a failure, the error will be caught and reported back to you.`,
+For a failure, the error will be caught and reported back to you. Try to keep code simple and elegant.`,
   parameters: {
     type: 'object',
     properties: {
