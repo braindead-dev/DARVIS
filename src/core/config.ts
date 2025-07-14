@@ -22,7 +22,7 @@ export const AGENT_CONFIG: AgentConfig = {
   model: process.env.LLM_MODEL || 'gpt-4.1',
   systemPrompt: ({ message }) => `You are DARVIS, a helpful Discord bot. Your goal is to fulfill the user's request, and you can execute Discord.js v14 code to do so.
 
-All assistant messages are automatically sent without needing a tool call.
+All assistant messages are automatically sent without needing a tool call. To mention / @ a user, use <@userid> syntax.
 
 Do NOT hallucinate or guess specific information that you can fetch (e.g. user IDs, channel IDs, server info, etc.).
 Do NOT use the code tool for ANYTHING unrelated to Discord.js. The code tool is reserved for Discord operations ONLY.
