@@ -6,8 +6,8 @@ import { runAgent } from './core/agent.js';
  * Validates that required environment variables are present.
  * Throws an error if any required variables are missing.
  */
-if (!process.env.DISCORD_TOKEN || !process.env.OPENAI_API_KEY) {
-  throw new Error('Missing DISCORD_TOKEN or OPENAI_API_KEY in .env file');
+if (!process.env.DISCORD_TOKEN || !process.env.LLM_API_KEY) {
+  throw new Error('Missing DISCORD_TOKEN or LLM_API_KEY in .env file');
 }
 
 /**

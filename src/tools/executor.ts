@@ -8,8 +8,9 @@ import { Client, Message } from 'discord.js';
  */
 export const executeDiscordJsCodeTool = {
   type: 'function' as const,
-  name: 'execute_discord_js_code',
-  description: `Executes arbitrary Discord.js v14 code to fulfill a user's request.
+  function: {
+    name: 'execute_discord_js_code',
+    description: `Executes arbitrary Discord.js v14 code to fulfill a user's request.
 You have access to the 'client' (the Discord.js Client) and 'message' (the original Discord Message object).
 The code runs in an async context, so you can use await.
 Return a value to let the user know the result of the execution.
@@ -18,18 +19,19 @@ For a successful execution, return an object with a 'summary' property, e.g., { 
 For a failure, the error will be caught and reported back to you. Try to keep code simple and elegant. 
 
 Do NOT run any dangerous or malicious code that may expose the bot to security risks.`,
-  parameters: {
-    type: 'object',
-    properties: {
-      code: {
-        type: 'string',
-        description: 'The string of Discord.js code to execute.',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          description: 'The string of Discord.js code to execute.',
+        },
       },
+      required: ['code'],
+      additionalProperties: false,
     },
-    required: ['code'],
-    additionalProperties: false,
+    strict: true,
   },
-  strict: true,
 };
 
 /**

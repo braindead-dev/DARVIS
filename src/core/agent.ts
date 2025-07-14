@@ -1,11 +1,7 @@
-import OpenAI from 'openai';
+import axios from 'axios';
 import { Client, Message } from 'discord.js';
 import { executeCode, executeDiscordJsCodeTool } from '../tools/executor.js';
 import { searchGif, gifSearchTool } from '../tools/gif-search.js';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 /**
  * Maximum number of iterations the agent can perform before stopping.
@@ -40,10 +36,32 @@ async function sendMessageWithFallback(message: Message, content: string) {
 }
 
 /**
+ * Makes a request to the LLM API to generate a response.
+ * 
+ * @param messages - Array of messages in OpenAI format
+ * @param tools - Array of available tools
+ * @returns Promise that resolves to the API response
+ */
+async function callLLM(messages: any[], tools: any[]) {
+  const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+    model: 'gpt-4.1',
+    messages,
+    tools
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+    }
+  });
+
+  return response.data;
+}
+
+/**
  * Runs the AI agent to process a Discord message and execute appropriate actions.
  * 
  * The agent operates in a loop where it:
- * 1. Analyzes the user's request using OpenAI
+ * 1. Analyzes the user's request using the LLM
  * 2. Decides whether to execute Discord.js code or respond directly
  * 3. Executes code if needed and incorporates results into the conversation
  * 4. Continues until the task is complete or max iterations reached
@@ -77,64 +95,61 @@ The user's message was sent in the channel and server IDs below:
   channelId: ${message.channel.id}
   guildId: ${message.guildId}`;
 
-  let input: any[] = [
+  let messages: any[] = [
     {
       role: 'system',
-      content: [
-        {
-          type: 'input_text',
-          text: systemPrompt,
-        },
-      ],
+      content: systemPrompt,
     },
     {
       role: 'user',
-      content: [
-        {
-          type: 'input_text',
-          text: `[${message.author.displayName} (username: ${message.author.username}, id: ${message.author.id})]\n${message.cleanContent}`,
-        },
-      ],
+      content: `[${message.author.displayName} (username: ${message.author.username}, id: ${message.author.id})]\n${message.cleanContent}`,
     },
   ];
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await openai.responses.create({
-      model: 'gpt-4.1',
-      input,
-      tools,
+    const response = await callLLM(messages, tools);
+    const choice = response.choices[0];
+    const assistantMessage = choice.message;
+
+    // Add the assistant's message to the conversation
+    messages.push({
+      role: 'assistant',
+      content: assistantMessage.content,
+      tool_calls: assistantMessage.tool_calls
     });
 
-    const output = response.output;
     let hasFunctionCalls = false;
 
-    for (const item of output) {
-      if (item.type === 'function_call') {
-        hasFunctionCalls = true;
-        const args = JSON.parse(item.arguments);
+    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      hasFunctionCalls = true;
+      
+      for (const toolCall of assistantMessage.tool_calls) {
+        const args = JSON.parse(toolCall.function.arguments);
         let result;
-        
-        if (item.name === 'execute_discord_js_code') {
+
+
+        // Direct the tool call to the correct tool
+        if (toolCall.function.name === 'execute_discord_js_code') {
           result = await executeCode(client, message, args.code);
-        } else if (item.name === 'search_gif') {
+        } else if (toolCall.function.name === 'search_gif') {
           result = await searchGif(client, message, args.query);
         }
 
-        console.log(`[Iteration ${i + 1}] Executing ${item.name}:`, args);
+        console.log(`[Iteration ${i + 1}] Executing ${toolCall.function.name}:`, args);
         console.log(`[Iteration ${i + 1}] Result:`, result);
         
-        input.push(item);
-        input.push({
-          type: 'function_call_output', 
-          call_id: item.call_id,
-          output: JSON.stringify(result),
+        // Add the tool result to the conversation
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result)
         });
       }
     }
 
     if (!hasFunctionCalls) {
-      if (response.output_text) {
-        await sendMessageWithFallback(message, response.output_text);
+      if (assistantMessage.content) {
+        await sendMessageWithFallback(message, assistantMessage.content);
       }
       return;
     }

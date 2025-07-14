@@ -8,25 +8,27 @@ import { Client, Message } from 'discord.js';
  */
 export const gifSearchTool = {
   type: 'function' as const,
-  name: 'search_gif',
-  description: `Searches for GIFs using Discord's API and returns the first result URL.
+  function: {
+    name: 'search_gif',
+    description: `Searches for GIFs using Discord's API and returns the first result URL.
 Use this liberally; whenever you want to express an emotion or something visually.
 The query should be descriptive of what kind of GIF they want (e.g., "laughing", "dancing", "cute cat"). Not too specific.
 Returns the URL of the first GIF found that matches the search query.
 
 When you send a gif, prefer to ONLY send the gif URL in your message and no other text. Ex. instead of "Here's a gif for you: [url]", just send the url"`,
-  parameters: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'The search query for the GIF (e.g., "laughing", "dancing", "cute cat").',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'The search query for the GIF (e.g., "laughing", "dancing", "cute cat").',
+        },
       },
+      required: ['query'],
+      additionalProperties: false,
     },
-    required: ['query'],
-    additionalProperties: false,
+    strict: true,
   },
-  strict: true,
 };
 
 /**
