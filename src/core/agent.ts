@@ -33,7 +33,7 @@ async function sendMessageWithFallback(message: Message, content: string) {
 /**
  * Makes a request to the LLM API to generate a response.
  * 
- * @param messages - Array of messages in OpenAI format
+ * @param messages - Array of messages
  * @param tools - Array of available tools
  * @returns Promise that resolves to the API response
  */
@@ -45,7 +45,7 @@ async function callLLM(messages: any[], tools: any[]) {
   }, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      'Authorization': `Bearer ${process.env.LLM_API_KEY}`
     }
   });
 
