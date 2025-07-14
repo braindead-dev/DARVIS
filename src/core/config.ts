@@ -12,6 +12,9 @@ export interface AgentConfig {
   
   // Maximum number of iterations the agent can perform before stopping
   maxIterations: number;
+
+  // Maximum depth of the conversation reply chain
+  maxConversationDepth: number;
 }
 
 export const AGENT_CONFIG: AgentConfig = {
@@ -40,4 +43,5 @@ The user's message was sent in the channel and server IDs below:
   guildId: ${message.guildId}`,
   fallbackMessage: "I've reached my maximum number of steps for this task. If I haven't finished, please try rephrasing your request.",
   maxIterations: 5,
+  maxConversationDepth: 10,
 }; 
