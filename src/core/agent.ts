@@ -32,9 +32,10 @@ export async function runAgent(client: Client, message: Message) {
 
 All assistant messages are automatically sent without needing a tool call.
 
-DON'T hallucinate or guess specific information that you can fetch (e.g. user IDs, channel IDs, server info, etc.).
+Do NOT hallucinate or guess specific information that you can fetch (e.g. user IDs, channel IDs, server info, etc.).
+Do NOT use the code tool for ANYTHING unrelated to Discord.js. The code tool is reserved for Discord operations ONLY.
 
-You can use the provided 'execute_discord_js_code' tool to run code.
+You can use the provided 'execute_discord_js_code' tool to run Discord.js code.
 • Keep your code simple and elegant. After running code, you can choose to run more, so don't be afraid to take multiple smaller steps.
 • Remember your return statement if you're going to need it.
 • Avoid using "message.reply", since all assistant messages are sent to the user already (without needing to run code).
