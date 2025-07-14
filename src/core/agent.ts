@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { Client, Message } from 'discord.js';
 import { executeCode, executeDiscordJsCodeTool } from '../tools/executor.js';
+import { searchGif, gifSearchTool } from '../tools/gif-search.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -52,7 +53,7 @@ async function sendMessageWithFallback(message: Message, content: string) {
  * @returns Promise that resolves when the agent completes its task
  */
 export async function runAgent(client: Client, message: Message) {
-  const tools = [executeDiscordJsCodeTool];
+  const tools = [executeDiscordJsCodeTool, gifSearchTool];
 
   const systemPrompt = `You are DARVIS, a helpful Discord bot. Your goal is to fulfill the user's request, and you can execute Discord.js v14 code to do so.
 
@@ -110,21 +111,24 @@ The user's message was sent in the channel and server IDs below:
     for (const item of output) {
       if (item.type === 'function_call') {
         hasFunctionCalls = true;
+        const args = JSON.parse(item.arguments);
+        let result;
         
         if (item.name === 'execute_discord_js_code') {
-          const args = JSON.parse(item.arguments);
-          const result = await executeCode(client, message, args.code);
-
-          console.log(`[Iteration ${i + 1}] Executing code:\n${args.code}`);
-          console.log(`[Iteration ${i + 1}] Result:`, result);
-          
-          input.push(item);
-          input.push({
-            type: 'function_call_output',
-            call_id: item.call_id,
-            output: JSON.stringify(result),
-          });
+          result = await executeCode(client, message, args.code);
+        } else if (item.name === 'search_gif') {
+          result = await searchGif(client, message, args.query);
         }
+
+        console.log(`[Iteration ${i + 1}] Executing ${item.name}:`, args);
+        console.log(`[Iteration ${i + 1}] Result:`, result);
+        
+        input.push(item);
+        input.push({
+          type: 'function_call_output', 
+          call_id: item.call_id,
+          output: JSON.stringify(result),
+        });
       }
     }
 
