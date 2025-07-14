@@ -1,6 +1,9 @@
 # DARVIS - The Agentic Discord Bot
-
-DARVIS is an intelligent Discord bot that can understands natural language and can execute complex, multi-step commands using Javascript and Discord.js.
+<div align="center">
+  <img src="https://github.com/braindead-dev/DARVIS/blob/main/assets/darvis.png?raw=true" alt="NoTrace Logo" width="120" height="120">
+  <h3>The Agentic Discord Bot</h3>
+  <p>Execute complex, multi-step commands with natural language</p>
+</div>
 
 - **Natural Language**: Understands complex Discord-related requests in natural language
 - **Dynamic Generation**: Generates and executes Discord.js v14 code on-the-fly to perform any Discord operation
@@ -12,13 +15,26 @@ DARVIS is an intelligent Discord bot that can understands natural language and c
 ### ⚠️ Security Consideration ⚠️
 - The bot executes LLM-generated code in an unsandboxed environment
 - The current implementation relies on AI alignment + system prompting to prevent malicious code generation. While this gaurdrail works effectively for most cases with a SotA model, this is not a production ready security solution. In production, code should ONLY be executed in a fully isolated sandbox environment.
-
+---
+### 📖 Usage Examples
+```
+@DARVIS ban Henry for spamming
+@DARVIS send a funny gif
+@DARVIS stylize this server's channel names and categories to have a kawaii theme
+@DARVIS DM a philosophical quote to everyone with the philosophy role
+@DARVIS who has sent the most messages in this channel?
+@DARVIS @ a random user in the server
+@DARVIS show me the member count of this server
+@DARVIS list all users who joined in the last 24h
+@DARVIS fix this channel's name to follow the same format as the other channels in this category
+```
+---
 ### Prerequisites
 
 - Node.js (v16+)
 - A Discord Bot Token (with intents enabled)
 - An LLM API Key (for any standard completions API; e.g. OpenAI, Anthropic, xAI)
-
+---
 ### Setup
 
 #### 1. Clone and Install
@@ -51,7 +67,7 @@ npm run dev
 # Production
 npm start
 ```
-
+---
 ### Configuration Options
 
 The bot's behavior is controlled through `src/core/config.ts`. Here's what each setting means:
@@ -67,6 +83,7 @@ The bot's behavior is controlled through `src/core/config.ts`. Here's what each 
 | `maxIterations` | number | Maximum LLM calls per request | `5` |
 | `maxConversationDepth` | number | Max messages to include in context | `10` |
 
+---
 ### Logic Flow
 
 #### 1. Message Processing Pipeline
@@ -136,19 +153,6 @@ export const myTool = {
     }
   }
 };
-```
-
-### 📖 Usage Examples
-
-#### Basic Commands
-```
-@DARVIS ban Henry for spamming
-@DARVIS send a funny gif
-@DARVIS DM a philosophical quote to everyone with the philosophy role
-@DARVIS who has sent the most messages in this channel?
-@DARVIS @ a random user in the server
-@DARVIS show me the member count of this server
-@DARVIS list all users who joined in the last 24h
 ```
 
 --- 
