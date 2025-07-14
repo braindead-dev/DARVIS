@@ -5,6 +5,63 @@ import { searchGif, gifSearchTool } from '../tools/gif-search.js';
 import { AGENT_CONFIG } from './config.js';
 
 /**
+ * Builds conversation history by traversing the reply chain backwards.
+ * Fetches all messages in the reply chain and formats them for the LLM.
+ * 
+ * @param message - The current Discord message
+ * @param client - The Discord.js client instance
+ * @param maxDepth - Maximum number of messages to traverse (default: 10)
+ * @returns Promise that resolves to an array of conversation messages
+ */
+async function buildConversationHistory(message: Message, client: Client, maxDepth: number = 10): Promise<any[]> {
+  const conversationMessages: any[] = [];
+  let currentMessage: Message | null = message;
+  let depth = 0;
+
+  // Traverse backwards through the reply chain
+  while (currentMessage && depth < maxDepth) {
+    // Determine the role based on whether the author is the bot
+    const role = currentMessage.author.id === client.user?.id ? 'assistant' : 'user';
+    
+    // Format the message content
+    let content: string;
+    if (role === 'user') {
+      content = `[${currentMessage.author.displayName} (username: ${currentMessage.author.username}, id: ${currentMessage.author.id})]\n${currentMessage.cleanContent}`;
+    } else {
+      content = currentMessage.content;
+    }
+
+    // Add to the beginning of the array (since we're going backwards)
+    conversationMessages.unshift({
+      role,
+      content
+    });
+
+    depth++;
+
+    // Move to the referenced message (if it exists)
+    if (currentMessage.reference?.messageId) {
+      try {
+        currentMessage = await currentMessage.channel.messages.fetch(currentMessage.reference.messageId);
+      } catch (error) {
+        // If we can't fetch the referenced message, break the chain
+        console.log(`Could not fetch referenced message at depth ${depth}:`, error);
+        break;
+      }
+    } else {
+      // No more references, end the chain
+      break;
+    }
+  }
+
+  if (depth >= maxDepth) {
+    console.log(`Conversation chain truncated at ${maxDepth} messages`);
+  }
+
+  return conversationMessages;
+}
+
+/**
  * Attempts to send a message with fallback logic.
  * First tries to reply to the original message, then falls back to sending a new message.
  * Handles cases where the original message is deleted or channel is inaccessible.
@@ -56,10 +113,11 @@ async function callLLM(messages: any[], tools: any[]) {
  * Runs the AI agent to process a Discord message and execute appropriate actions.
  * 
  * The agent operates in a loop where it:
- * 1. Analyzes the user's request using the LLM
- * 2. Decides whether to execute Discord.js code or respond directly
- * 3. Executes code if needed and incorporates results into the conversation
- * 4. Continues until the task is complete or max iterations reached
+ * 1. Builds conversation history from reply chains
+ * 2. Analyzes the user's request using the LLM with full context
+ * 3. Decides whether to execute Discord.js code or respond directly
+ * 4. Executes code if needed and incorporates results into the conversation
+ * 5. Continues until the task is complete or max iterations reached
  * 
  * @param client - The Discord.js client instance
  * @param message - The Discord message that triggered the agent
@@ -70,15 +128,15 @@ export async function runAgent(client: Client, message: Message) {
 
   const systemPrompt = AGENT_CONFIG.systemPrompt({ message });
 
+  // Build conversation history from reply chain, using config for max depth
+  const conversationHistory = await buildConversationHistory(message, client, AGENT_CONFIG.maxConversationDepth);
+  
   let messages: any[] = [
     {
       role: 'system',
       content: systemPrompt,
     },
-    {
-      role: 'user',
-      content: `[${message.author.displayName} (username: ${message.author.username}, id: ${message.author.id})]\n${message.cleanContent}`,
-    },
+    ...conversationHistory
   ];
 
   for (let i = 0; i < AGENT_CONFIG.maxIterations; i++) {
