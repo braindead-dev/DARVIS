@@ -69,7 +69,6 @@ export async function searchGif(
     const gifUrl = firstGif.url;
     
     return {
-      summary: `Found GIF for "${query}"`,
       url: gifUrl,
     };
   } catch (error: any) {
