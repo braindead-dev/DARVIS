@@ -2,47 +2,33 @@
 
 DARVIS is an intelligent Discord bot that can understands natural language and can execute complex, multi-step commands using Javascript and Discord.js.
 
-## 🚀 Features
-
-- **Natural Language Processing**: Understands complex Discord-related requests in natural language
-- **Dynamic Code Execution**: Executes Discord.js v14 code on-the-fly to perform operations
+- **Natural Language**: Understands complex Discord-related requests in natural language
+- **Dynamic Generation**: Generates and executes Discord.js v14 code on-the-fly to perform any Discord operation
 - **Multi-Step Operations**: Performs complex tasks by breaking them down into steps, enabling sophisticated and unique commands that go beyond traditional bot capabilities
+- **Extensible Tooling**: Custom built-in GIF tool, and ability to easily add as many tools as needed
 - **Conversation Context**: Maintains conversation history through Discord reply chains
-- **GIF Search Integration**: Can search and post GIFs in response to requests
 - **Configurable Limits**: Customizable iteration limits and conversation depth
-- **Error Handling**: Robust error handling with fallback messaging
 
-## 📋 Prerequisites
+### ⚠️ Security Consideration ⚠️
+- The bot executes LLM-generated code in an unsandboxed environment
+- The current implementation relies on AI alignment + system prompting to prevent malicious code generation. While this gaurdrail works effectively for most cases with a SotA model, this is not a production ready security solution. In production, code should ONLY be executed in a fully isolated sandbox environment.
 
-- Node.js (v16 or higher)
-- A Discord Bot Token
-- An LLM API Key (OpenAI GPT-4 or compatible API)
+### Prerequisites
 
-## 🛠️ Setup Instructions
+- Node.js (v16+)
+- A Discord Bot Token (with intents enabled)
+- An LLM API Key (for any standard completions API; e.g. OpenAI, Anthropic, xAI)
 
-### 1. Clone and Install
+### Setup
+
+#### 1. Clone and Install
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/braindead-dev/DARVIS
 cd Darvis
-npm install
+npm i
 ```
-
-### 2. Environment Configuration
-
-Create a `.env` file in the root directory:
-
-```env
-# Discord Bot Token (required)
-DISCORD_TOKEN=your_discord_bot_token_here
-
-# LLM API Configuration (required)
-LLM_API_KEY=your_llm_api_key_here
-
-# The API key should be for a service that implements the standard chat completions API (like OpenAI, Anthropic, or xAI). 
-```
-
-### 3. Discord Bot Setup
+#### 2. Discord Bot Setup
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create a new application
@@ -51,12 +37,12 @@ LLM_API_KEY=your_llm_api_key_here
 5. Enable the following privileged gateway intents:
    - **Message Content Intent** (required for reading message content)
    - **Server Members Intent** (required for member operations)
+  
+#### 3. Environment Configuration
 
-### 4. Bot Permissions
+Create a `.env` file in the root directory that follows the .env.template
 
-When inviting the bot to your server, ensure it has the approprate permissions for the functionality you want.
-
-### 5. Run the Bot
+#### 4. Invite and Run the Bot
 
 ```bash
 # Development
@@ -66,11 +52,11 @@ npm run dev
 npm start
 ```
 
-## ⚙️ Configuration Options
+### Configuration Options
 
 The bot's behavior is controlled through `src/core/config.ts`. Here's what each setting means:
 
-### Core Configuration (`AgentConfig`)
+#### Core Configuration (`AgentConfig`)
 
 | Setting | Type | Description | Default |
 |---------|------|-------------|---------|
@@ -81,15 +67,15 @@ The bot's behavior is controlled through `src/core/config.ts`. Here's what each 
 | `maxIterations` | number | Maximum LLM calls per request | `5` |
 | `maxConversationDepth` | number | Max messages to include in context | `10` |
 
-## 🔄 Logic Flow
+### Logic Flow
 
-### 1. Message Processing Pipeline
+#### 1. Message Processing Pipeline
 
 ```
 Discord Message → Filter (mentions bot?) → Build Context → LLM Processing → Execute Actions → Respond
 ```
 
-### 2. Detailed Flow
+#### 2. Detailed Flow
 
 1. **Message Reception** (`src/index.ts`)
    - Bot receives a message in Discord
@@ -120,7 +106,7 @@ Discord Message → Filter (mentions bot?) → Build Context → LLM Processing 
    - Falls back to new message if reply fails
    - Handles deleted messages gracefully
 
-### 3. Tool System
+#### 3. Tool System
 
 The bot uses a tool-based architecture:
 
@@ -128,18 +114,7 @@ The bot uses a tool-based architecture:
 - **`search_gif`**: Searches and posts GIFs
 - Tools are defined with strict schemas for the LLM
 
-### 4. Extensibility
-
-The tool system is designed to be extensible. You can add as many tools as needed to enhance the bot's capabilities. Each tool should:
-
-- Have a clear, focused purpose
-- Include comprehensive documentation
-- Follow the tool schema format
-- Be registered in the agent's tool array
-
-Tools can range from simple utility functions to complex integrations with external services. The LLM will automatically understand how to use new tools based on their descriptions and parameter schemas.
-
-### Adding New Tools
+#### Adding New Tools
 
 1. Create a new tool file in `src/tools/`
 2. Export a tool definition object and execution function
@@ -163,15 +138,9 @@ export const myTool = {
 };
 ```
 
-## ⚠️🔴 Critical Security Consideration 🔴⚠️
-**Arbitrary Code Execution**
-   - The bot executes LLM-generated JavaScript code
-   - **Risk**: Malicious code could compromise the bot and server ENTIRELY
-   - **Mitigation**: While the current implementation relies on AI alignment and careful system prompting to prevent malicious code generation, this is not a complete security solution. The effectiveness depends heavily on the specific LLM model being used and its alignment. This should not be the only safeguard in place. The execution environment is currently not properly sandboxed. In production, code should only be executed in a fully isolated sandbox environment with additional security measures and restrictions in place.
+### 📖 Usage Examples
 
-## 📖 Usage Examples
-
-### Basic Commands
+#### Basic Commands
 ```
 @DARVIS ban Henry for spamming
 @DARVIS send a funny gif
@@ -183,5 +152,5 @@ export const myTool = {
 ```
 
 --- 
-
+### Contributions
 Always open for contributions!! Feel free to submit a PR
