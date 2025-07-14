@@ -13,6 +13,32 @@ const openai = new OpenAI({
 const MAX_ITERATIONS = 5;
 
 /**
+ * Attempts to send a message with fallback logic.
+ * First tries to reply to the original message, then falls back to sending a new message.
+ * Handles cases where the original message is deleted or channel is inaccessible.
+ * 
+ * @param message - The Discord message to reply to
+ * @param content - The content to send
+ * @returns Promise that resolves when the message is sent or fails silently
+ */
+async function sendMessageWithFallback(message: Message, content: string) {
+  try {
+    // First attempt: Try to reply to the original message
+    await message.reply(content);
+  } catch (error) {
+    // Second attempt: Try to send as a new message if reply fails
+    try {
+      if (message.channel.isTextBased()) {
+        await (message.channel as any).send(content);
+      }
+    } catch (channelError) {
+      // If all attempts fail, log the error but continue execution
+      console.error('Failed to send message:', channelError);
+    }
+  }
+}
+
+/**
  * Runs the AI agent to process a Discord message and execute appropriate actions.
  * 
  * The agent operates in a loop where it:
@@ -104,13 +130,14 @@ The user's message was sent in the channel and server IDs below:
 
     if (!hasFunctionCalls) {
       if (response.output_text) {
-        await message.reply(response.output_text);
+        await sendMessageWithFallback(message, response.output_text);
       }
       return;
     }
   }
 
-  await message.reply(
+  await sendMessageWithFallback(
+    message,
     "I've reached my maximum number of steps for this task. If I haven't finished, please try rephrasing your request."
   );
 } 
