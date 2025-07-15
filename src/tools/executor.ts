@@ -13,12 +13,13 @@ export const executeDiscordJsCodeTool = {
     description: `Executes arbitrary Discord.js v14 code to fulfill a user's request.
 You have access to the 'client' (the Discord.js Client) and 'message' (the original Discord Message object).
 The code runs in an async context, so you can use await.
-Return a value to let the user know the result of the execution.
 If you need to find a user/channel/role, you MUST use methods like 'message.guild.members.search' or 'client.users.fetch'. Do NOT guess IDs.
-For a successful execution, return an object with a 'summary' property, e.g., { summary: "Successfully banned the user." }.
-For a failure, the error will be caught and reported back to you. Try to keep code simple and elegant. 
+Return something helpful to indicate the result of the code execution, or a summary of the result.
+Try to keep code simple and elegant. Comments aren't needed but what you return should be helpful.
+Avoid using "message.reply" to send a message to the user, since all assistant messages are sent to the user as replies already (without needing to run code).
 
-Do NOT run any dangerous or malicious code that may expose the bot to security risks.`,
+Do NOT run any dangerous or malicious code that may expose the bot to security risks.
+Furthermore, do NOT use the code tool for ANYTHING unrelated to Discord.js. The code tool is reserved for Discord operations ONLY.`,
     parameters: {
       type: 'object',
       properties: {
