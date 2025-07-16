@@ -5,6 +5,50 @@ import { searchGif, gifSearchTool } from '../tools/gif-search.js';
 import { AGENT_CONFIG } from './config.js';
 
 /**
+ * Formats Discord message content to make mentions more intelligible.
+ * Replaces Discord's mention format with a more descriptive format that includes
+ * username, display name, and user ID to make it clear when someone is mentioned.
+ * 
+ * @param message - The Discord message to format
+ * @returns Formatted message content with intelligible mentions
+ */
+function formatMessageContent(message: Message): string {
+  let content = message.content;
+  
+  // Handle user mentions
+  for (const user of message.mentions.users.values()) {
+    const mentionPattern = new RegExp(`<@!?${user.id}>`, 'g');
+    
+    // Special case for mentions of the current bot
+    let replacement: string;
+    if (user.id === message.client.user?.id) {
+      replacement = `[<@me>]`;
+    } else {
+      replacement = `[${user.displayName} <@${user.id}>]`;
+    }
+    
+    content = content.replace(mentionPattern, replacement);
+  }
+  
+  // Handle role mentions
+  for (const role of message.mentions.roles.values()) {
+    const mentionPattern = new RegExp(`<@&${role.id}>`, 'g');
+    const replacement = `[${role.name} <@&${role.id}>]`;
+    content = content.replace(mentionPattern, replacement);
+  }
+  
+  // Handle channel mentions
+  for (const channel of message.mentions.channels.values()) {
+    const mentionPattern = new RegExp(`<#${channel.id}>`, 'g');
+    const channelName = 'name' in channel ? channel.name : channel.id;
+    const replacement = `[#${channelName} <#${channel.id}>]`;
+    content = content.replace(mentionPattern, replacement);
+  }
+  
+  return content;
+}
+
+/**
  * Builds conversation history by traversing the reply chain backwards.
  * Fetches all messages in the reply chain and formats them for the LLM.
  * 
@@ -26,9 +70,9 @@ async function buildConversationHistory(message: Message, client: Client, maxDep
     // Format the message content
     let content: string;
     if (role === 'user') {
-      content = `[${currentMessage.author.displayName} (username: ${currentMessage.author.username}, id: ${currentMessage.author.id})]\n${currentMessage.cleanContent}`;
+      content = `[${currentMessage.author.displayName} <@${currentMessage.author.id}>]\n${formatMessageContent(currentMessage)}`;
     } else {
-      content = currentMessage.content;
+      content = formatMessageContent(currentMessage);
     }
 
     // Add to the beginning of the array (since we're going backwards)
