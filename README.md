@@ -15,6 +15,7 @@
 ### ⚠️ Security Consideration ⚠️
 - The bot executes LLM-generated code in an unsandboxed environment
 - The current implementation relies on AI alignment + system prompting to prevent malicious code generation. While this gaurdrail works effectively for most cases with a SotA model, this is not a production ready security solution. In production, code should ONLY be executed in a fully isolated sandbox environment.
+side note: anecdotally, the bot is very safe 
 ---
 ### 📖 Usage Examples
 ```
